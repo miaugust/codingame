@@ -1,0 +1,11 @@
+C:\Users\maugustynski\Documents\code\codinGame\bin\Debug\netcoreapp2.1\codinGame.deps.json
+C:\Users\maugustynski\Documents\code\codinGame\bin\Debug\netcoreapp2.1\codinGame.runtimeconfig.json
+C:\Users\maugustynski\Documents\code\codinGame\bin\Debug\netcoreapp2.1\codinGame.runtimeconfig.dev.json
+C:\Users\maugustynski\Documents\code\codinGame\bin\Debug\netcoreapp2.1\codinGame.dll
+C:\Users\maugustynski\Documents\code\codinGame\bin\Debug\netcoreapp2.1\codinGame.pdb
+C:\Users\maugustynski\Documents\code\codinGame\obj\Debug\netcoreapp2.1\codinGame.csprojAssemblyReference.cache
+C:\Users\maugustynski\Documents\code\codinGame\obj\Debug\netcoreapp2.1\codinGame.csproj.CoreCompileInputs.cache
+C:\Users\maugustynski\Documents\code\codinGame\obj\Debug\netcoreapp2.1\codinGame.AssemblyInfoInputs.cache
+C:\Users\maugustynski\Documents\code\codinGame\obj\Debug\netcoreapp2.1\codinGame.AssemblyInfo.cs
+C:\Users\maugustynski\Documents\code\codinGame\obj\Debug\netcoreapp2.1\codinGame.dll
+C:\Users\maugustynski\Documents\code\codinGame\obj\Debug\netcoreapp2.1\codinGame.pdb

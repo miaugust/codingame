@@ -33,12 +33,15 @@ internal class BestPathSearcher
     private Stage gameStage;
     private Node estimatedStartingPoint;
     public List<Node> SearchList { get; set; }
+    public List<Node> ClosedList { get; set; }
 
     public BestPathSearcher(Stage gameStage, Node estimatedStartingPoint)
     {
         this.gameStage = gameStage;
         this.estimatedStartingPoint = estimatedStartingPoint;
         SearchList = new List<Node> { estimatedStartingPoint};
+        ClosedList = new List<Node>();
+
     }
 
     public void CalculateRoute()

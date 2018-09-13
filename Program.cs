@@ -11,11 +11,9 @@ class Player
     {
         var GameStage = new Stage();
         GameStage.AddOptionalElevators();
-        GameStage.PrintMap();
-        Node EstimatedStartingPoint = new Node(GameStage);
-        var PathSearcher = new BestPathSearcher(GameStage, EstimatedStartingPoint);
-        PathSearcher.CalculateRoute();
+        var PathSearcher = new BestPathSearcher(GameStage);
 
+        bool start = true;
         // game loop
         while (true)
         {
@@ -24,54 +22,73 @@ class Player
             int clonePos = int.Parse(inputs[1]); // position of the leading clone on its floor
             string direction = inputs[2]; // direction of the leading clone: LEFT or RIGHT
             Console.Error.WriteLine(String.Join(" ", inputs));
-            
+
+            if (start)
+            {
+                GameStage.Map[cloneFloor][clonePos] = 'S';
+                GameStage.PrintMap();
+                Node staringPoint = new Node(GameStage, clonePos, cloneFloor, direction);
+                PathSearcher.AddStartingPoint(staringPoint);
+                PathSearcher.CalculateRoute();
+                start = false;
+
+            }
+
             (int y, int x) = PathSearcher.Path.Peek();
             string action = "WAIT";
             // Jeśli lider osiągną dotychczasowy cel
-            if(cloneFloor == y && clonePos == x)
+            if (cloneFloor == y && clonePos == x)
             {
                 PathSearcher.Path.Pop();
-                if(!PathSearcher.Path.Any())
+                if (!PathSearcher.Path.Any())
                     action = "WAIT";
                 else
-                {
                     (y, x) = PathSearcher.Path.Peek();
-                }
             }
-            if(y > cloneFloor && GameStage.Map[cloneFloor][clonePos] == 'E')
+            if (cloneFloor == -1 || clonePos == -1)
                 action = "WAIT";
-            else if(y > cloneFloor && GameStage.Map[cloneFloor][clonePos] == 'O' )
+            else if (y > cloneFloor && GameStage.Map[cloneFloor][clonePos] == 'E')
+                action = "WAIT";
+            else if (y > cloneFloor && GameStage.Map[cloneFloor][clonePos] == 'O')
             {
                 action = "ELEVATOR";
                 GameStage.Map[cloneFloor][clonePos] = 'E';
             }
-            else if(clonePos > x && direction == "RIGHT")
+
+            else if (y == cloneFloor && clonePos > x && direction == "RIGHT")
                 action = "BLOCK";
-            else if(clonePos < x && direction == "LEFT")
+            else if (y == cloneFloor && clonePos < x && direction == "LEFT")
                 action = "BLOCK";
 
+            if (y == cloneFloor && GameStage.Map[cloneFloor][clonePos] == 'O')
+                GameStage.Map[cloneFloor][clonePos] = '_';
 
-            Console.WriteLine(action); // action: WAIT or BLOCK
+            Console.WriteLine(action);
+            GameStage.NbRounds--;
         }
     }
 }
 internal class BestPathSearcher
 {
     private Stage gameStage;
-    private Node estimatedStartingPoint;
     private List<Node> SearchList;
     private List<Node> ClosedList;
-    public Stack<ValueTuple<int,int>> Path;
+    public Stack<ValueTuple<int, int>> Path;
     private Node lastNode;
 
-    public BestPathSearcher(Stage gameStage, Node estimatedStartingPoint)
+    public BestPathSearcher(Stage gameStage)
     {
         this.gameStage = gameStage;
-        this.estimatedStartingPoint = estimatedStartingPoint;
-        SearchList = new List<Node> { estimatedStartingPoint };
+
+        SearchList = new List<Node>();
         ClosedList = new List<Node>();
         Path = new Stack<(int, int)>();
         lastNode = new Node();
+    }
+
+    public void AddStartingPoint(Node node)
+    {
+        SearchList.Add(node);
     }
 
     public void CalculateRoute()
@@ -90,21 +107,23 @@ internal class BestPathSearcher
                     SearchList.Clear();
                     break;
                 }
-                var sameOnOpen = SearchList.FirstOrDefault(n => n.X == neighbor.X && n.Y == neighbor.Y && n.ExtraElevatorsUsed == neighbor.ExtraElevatorsUsed);
-                var sameOnClosed = ClosedList.FirstOrDefault(n => n.X == neighbor.X && n.Y == neighbor.Y && n.ExtraElevatorsUsed == neighbor.ExtraElevatorsUsed);
-                if(sameOnOpen == null && sameOnClosed == null)
+                var sameOnOpen = SearchList.FirstOrDefault(n => n.X == neighbor.X &&
+                    n.Y == neighbor.Y && n.ExtraElevatorsUsed == neighbor.ExtraElevatorsUsed && n.BotDirection == neighbor.BotDirection);
+                var sameOnClosed = ClosedList.FirstOrDefault(n => n.X == neighbor.X &&
+                    n.Y == neighbor.Y && n.ExtraElevatorsUsed == neighbor.ExtraElevatorsUsed && n.BotDirection == neighbor.BotDirection);
+                if (sameOnOpen == null && sameOnClosed == null)
                     SearchList.Add(neighbor);
                 else
                 {
-                    if(sameOnOpen != null && sameOnOpen.NodeCost > neighbor.NodeCost)
+                    if (sameOnOpen != null && sameOnOpen.NodeCost > neighbor.NodeCost)
                         SearchList.Add(neighbor);
-                    else if(sameOnClosed != null && sameOnClosed.NodeCost > neighbor.NodeCost)
+                    else if (sameOnClosed != null && sameOnClosed.NodeCost > neighbor.NodeCost)
                         SearchList.Add(neighbor);
                 }
             }
             ClosedList.Add(BestSoFar);
         }
-        
+
         while (lastNode.Parent != null)
         {
             Path.Push((lastNode.Y, lastNode.X));
@@ -147,7 +166,7 @@ internal class BestPathSearcher
         if (gameStage.Map[bestSoFar.Y][bestSoFar.X] == 'O' && bestSoFar.ExtraElevatorsUsed < gameStage.NbExtraElevators)
         {
             var n = new Node(gameStage, bestSoFar, bestSoFar.X, bestSoFar.Y + 1);
-            n.ExtraElevatorsUsed = bestSoFar.ExtraElevatorsUsed + 1;
+            //n.ExtraElevatorsUsed = bestSoFar.ExtraElevatorsUsed + 1;
             Neighbors.Add(n);
         }
         return Neighbors;
@@ -155,6 +174,7 @@ internal class BestPathSearcher
 }
 internal class Node
 {
+    public string BotDirection { get; set; }
     public Node Parent { get; private set; }
     public int X { get; set; }
     public int Y { get; set; }
@@ -163,18 +183,17 @@ internal class Node
     public float CostToGetHere { get; set; }
     public float OptimisticCostToFinish { get; set; }
 
-    public Node(Stage GameStage)
+    public Node(Stage GameStage, int x, int y, string botDirection)
     {
         Parent = null;
-        Y = 0;
-        var baseFloor = new String(GameStage.Map[0]);
+        Y = y;
+        X = x;
+        BotDirection = botDirection;
+        var distanceToFinish = GameStage.ExitFloor + Math.Abs(GameStage.ExitPos - X);
+        if ((botDirection == "RIGHT" && GameStage.ExitPos < x) || (botDirection == "LEFT" && GameStage.ExitPos > x))
+            distanceToFinish += 3;
 
-        if (baseFloor.Count(c => c == 'E') == 2)
-            X = (baseFloor.IndexOf('E') + baseFloor.LastIndexOf('E')) / 2;
-        else
-            X = baseFloor.Length / 2;
-
-        NodeCost = OptimisticCostToFinish = GameStage.ExitFloor + Math.Abs(GameStage.ExitPos - X);
+        NodeCost = OptimisticCostToFinish = distanceToFinish;
     }
     public Node(Stage GameStage, Node ParentNode, int x, int y)
     {
@@ -182,9 +201,27 @@ internal class Node
         X = x;
         Y = y;
         ExtraElevatorsUsed = Parent.ExtraElevatorsUsed;
+
+        if (Y == ParentNode.Y + 1 && GameStage.Map[ParentNode.Y][ParentNode.X] == 'O')
+            ExtraElevatorsUsed++;
+
         CostToGetHere = ParentNode.CostToGetHere + Math.Abs(x - ParentNode.X) + y - ParentNode.Y;
+        if (X - ParentNode.X > 0)
+            BotDirection = "RIGHT";
+        else if (X - ParentNode.X < 0)
+            BotDirection = "LEFT";
+        else
+            BotDirection = Parent.BotDirection;
+
+        if (BotDirection != ParentNode.BotDirection)
+            CostToGetHere += 3;
+
         OptimisticCostToFinish = Math.Abs(x - GameStage.ExitPos) + Math.Abs(y - GameStage.ExitFloor);
+        if ((X < GameStage.ExitPos && BotDirection == "LEFT") || (X > GameStage.ExitPos && BotDirection == "RIGHT"))
+            OptimisticCostToFinish += 3;
+
         NodeCost = CostToGetHere + OptimisticCostToFinish;
+
     }
 
     public Node()
@@ -192,7 +229,7 @@ internal class Node
     }
     public override string ToString()
     {
-        return $"X: {X} Y: {Y} E: {ExtraElevatorsUsed} Cost: {NodeCost}";
+        return $"X: {X} Y: {Y} E: {ExtraElevatorsUsed} D: {BotDirection} Cost: {NodeCost}";
     }
 }
 
@@ -236,18 +273,20 @@ internal class Stage
     }
     public void AddOptionalElevators()
     {
-        //Under the exit
-        if (Map[ExitFloor - 1][ExitPos] == '_')
-            Map[ExitFloor - 1][ExitPos] = 'O';
+
         // Everywere underneath
-        for (int i = ExitFloor - 1; i > 0; i--)
+        for (int i = ExitFloor; i > 0; i--)
         {
             for (int j = 0; j < Width; j++)
             {
-                if (Map[i][j] != '_')
+                if (Map[i][j] == 'X' || (Map[i][j] == 'E' && i < ExitFloor))
                 {
-                    if (Map[i - 1][j] == '_')
-                        Map[i - 1][j] = 'O';
+                    for (int k = 1; k <= NbExtraElevators; k++)
+                    {
+                        if (i - k >= 0 && Map[i - k][j] == '_')
+                            Map[i - k][j] = 'O';
+                    }
+
                 }
             }
         }

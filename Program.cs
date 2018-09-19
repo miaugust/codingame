@@ -51,6 +51,8 @@ class Solution
         string r;
         TryGetRepeatedDigits(s, out r);
 
+        
+
         Regex rx = new Regex(r);
         Match m = rx.Match(s);
         int idx = m.Index;
@@ -59,8 +61,7 @@ class Solution
     public static bool TryGetRepeatedDigits(string digitSequence, out string repeatedDigits)
 {
     repeatedDigits = null;
-    string pattern = @"^\d*(?<repeat>\d+)\k<repeat>+";
-    //string pattern = @"^\d*(?<repeat>\d+)\k<repeat>+\d*$";
+    string pattern = @"^\d*(?<repeat>\d+)\k<repeat>+\d*$";
 
     if (Regex.IsMatch(digitSequence, pattern))
     {
